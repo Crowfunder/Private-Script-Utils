@@ -11,7 +11,7 @@ SET separator=------------------------------------------------------------------
 
 :: Domains used for overall and SK domains reachability test
 SET domainsArray[1]="google.com"
-SET domainsArray[2]="thisdomaindoesnotexistandservesasafailtest.com"
+SET domainsArray[2]="0.com"
 SET domainsArray[3]="gamemedia2.spiralknights.com"
 SET domainsArray[4]="game.spiralknights.com"
 SET domainsArray[5]="spiralknights.com"
@@ -25,7 +25,7 @@ SET domainsArray[5]="spiralknights.com"
 :: Ping Successful
 :: DNS resolution successful
 ::
-:: ----- thisdomaindoesnotexistandservesasafailtest.com -----
+:: ----- 0.com -----
 :: Response Code: 000
 :: Ping request could not find host
 :: Non-existent domain
