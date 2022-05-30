@@ -5,8 +5,6 @@
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 :: Set Constant Vars
-:: I have no idea how to insert a var into cutting from string.
-:: For now "download_url" is purely informational.
 SET regkeys[1]="HKEY_CURRENT_USER\SOFTWARE\Grey Havens\Spiral Knights"
 SET regkeys[2]="HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam"
 SET separator=--------------------------------------------------------------------------------
