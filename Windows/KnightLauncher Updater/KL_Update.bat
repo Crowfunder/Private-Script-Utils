@@ -9,6 +9,10 @@
 :: For now "download_url" is purely informational.
 SET regkeys[1]="HKEY_CURRENT_USER\SOFTWARE\Grey Havens\Spiral Knights"
 SET regkeys[2]="HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam"
+SET api_url="https://api.github.com/repos/lucas-allegri/KnightLauncher/releases/latest"
+SET download_url="https://github.com/lucas-allegri/KnightLauncher/releases/download/"
+SET javaurl="https://javadl.oracle.com/webapps/download/AutoDL?BundleId=245057_d3c52aa6bfa54d3ca74e617f18309292"
+SET javafname=jre_kl.exe
 SET separator=--------------------------------------------------------------------------------
 
 :: gamepathfailsafe gets triggered once the script finds a suitable SK path.
@@ -131,36 +135,64 @@ IF NOT EXIST %gamepath%\rsrc (
 
 :: Simple asking for confirmation, just in case.
 %gamepath:~1,2%
-SET buff1=false
-SET buff2=false
-SET buff3=false
+SET buff=false
 CD "%gamepath%"
-ECHO KnightLauncher will be uninstalled from this folder: %gamepath%
-SET /P opt1=Would you like to proceed? (Y/N) 
-IF /I %opt1% EQU y ( SET buff1=true )
-IF /I %opt1% EQU yes ( SET buff1=true )
-IF /I %buff1% NEQ true ( EXIT /b )
+ECHO KnightLauncher will be installed/updated in this folder: %gamepath%
+SET /P opt=Would you like to proceed? (Y/N) 
+IF /I %opt% EQU y ( SET buff=true )
+IF /I %opt% EQU yes ( SET buff=true )
+IF /I %buff% NEQ true ( EXIT /b )
 
-:: Unpatch Java, if requested
-SET /P opt2=Would you like to patch your Java back to 32bit? (Y/N) 
-IF /I %opt2% EQU y ( SET buff2=true )
-IF /I %opt2% EQU yes ( SET buff2=true )
-IF /I %buff2% EQU true (
-    RMDIR /Q /S java_vm
-    REN java_vm_unpatched java_vm
+:: Check if Java is properly installed. Download and install if it's not.
+SETLOCAL EnableDelayedExpansion
+javaw >nul 2>&1!
+IF "%errorlevel%" EQU "9009" (
+    ECHO You need Java installed on your machine to use KnightLauncher.
+	IF NOT EXIST jre_kl.exe (
+		ECHO Downloading...
+		ECHO %separator%
+		curl.exe !javaurl! -o !javafname! -L
+		ECHO %separator%
+		ECHO Success. 
+	)
+    ECHO Please proceed with the installation. The script will restart itself afterwards.
+    PING -n 4 127.0.0.1>nul
+    !javafname!
+    START KL_Update.bat & EXIT
+)
+DEL !javafname!
+SETLOCAL DisableDelayedExpansion
+
+:: Checking if other versions are installed.
+:: If there are - remove them retaining "KnightLauncher.properties".
+:: Also trying to kill the KnightLauncher process just in case.
+IF EXIST *KnightLauncher* ( 
+    ECHO Detected other version installed, removing...
+    TASKKILL /IM javaw.exe >nul 2>&1!
+    IF EXIST KnightLauncher.properties ( REN KnightLauncher.properties move.properties)
+    DEL *KnightLauncher*
+    IF EXIST move.properties ( REN move.properties KnightLauncher.properties )
+    ECHO Success!
 )
 
-:: Restore game files, if requested
-SET /P opt3=Would you like to restore your game files? (Y/N) 
-IF /I %opt3% EQU y ( SET buff3=true )
-IF /I %opt3% EQU yes ( SET buff3=true )
-IF /I %buff3% EQU true (
-   ECHO Unpacking, it may take a while, please wait...
-   tar -xf rsrc/full-rest-bundle.jar -C rsrc
-) 
+:: Preparing installation info.
+ECHO Downloading...
+curl.exe -sSL %api_url% | findstr browser_download_url > temp 
+SET /P url=<temp
+DEL temp
+SET url=%url:"=%
+SET url=%url:      browser_download_url: =%
+SET filename=%url:https://github.com/lucas-allegri/KnightLauncher/releases/download/=%
+ECHO %filename% > temp
+(FOR /F "tokens=1,* delims=/" %%a IN (temp) DO ECHO %%b) > temp2
+SET /P filename=<temp2
+DEL temp
+DEL temp2
 
-:: Remove all files related to KnightLaucher
-RMDIR /Q /S KnightLauncher
-RMDIR /Q /S mods
-DEL /Q /F *KnightLauncher*
-DEL /Q /F KL*
+:: Downloading, installing and running the new version.
+:: NOTE: If "tar" fails - update to Windows 10, or update your Windows 10. Build 17063 at least.
+ECHO %separator%
+curl.exe %url% -o %filename% -L
+ECHO %separator%
+tar -xf %filename% & DEL %filename% & KnightLauncher_windows.bat
+ECHO Success!
