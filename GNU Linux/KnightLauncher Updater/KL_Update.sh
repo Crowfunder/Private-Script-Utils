@@ -4,17 +4,13 @@
 # KnightLauncher gh: https://github.com/lucas-allegri/KnightLauncher
 
 GREEN="\033[0;32m"
-NONE="\033[0m"  
+NONE="\033[0m"
 RED="\033[0;31m"
 filename=KnightLauncher.zip
 
 # Checking if script was run inside Spiral Knights directory. If not, it asks for inputting game's main directory full path. Broken if somebody somehow has random "rsrc" and "scenes" folders in place where script is running. Too bad.
-if [ -d "rsrc" ]; then
-    if [ -d "scenes" ]; then
-        skpath=$(pwd)
-    else
-        read -p "Please enter the Spiral Knights main folder absolute path: " skpath
-    fi
+if [[ -d "rsrc" && -d "scenes" && -f "code/projectx-pcode.jar" ]]; then
+    skpath=$(pwd)
 else
     read -p "Please enter the Spiral Knights main folder absolute path: " skpath
 fi
@@ -29,7 +25,9 @@ case $opt in
         # Checking if other versions are installed, if there are - remove them retaining "KnightLauncher.properties".
         if [ -f "${skpath}/KnightLauncher.jar" ]; then
             echo -e "Detected other version installed, removing..."
-            if [ -f "${skpath}/KnightLauncher.properties" ]; then  
+            # Trying to kill running KnightLauncher instance, just in case.
+            kill $(pgrep java) > /dev/null 2>&1
+            if [ -f "${skpath}/KnightLauncher.properties" ]; then
                 mv "${skpath}/KnightLauncher.properties" "${skpath}/move.properties"
                 rm -v "${skpath}/"*KnightLauncher*
                 mv "${skpath}/move.properties" "${skpath}/KnightLauncher.properties"
@@ -41,7 +39,7 @@ case $opt in
 
         # Downloading and installing new version.
         echo "Downloading..."
-        curl -s https://api.github.com/repos/lucas-allegri/KnightLauncher/releases/latest | grep "browser_download_url" | cut -d : -f 2,3 | tr -d \" | wget --show-progress -O "${filename}" -qi -
+        curl -sSL https://api.github.com/repos/lucas-allegri/KnightLauncher/releases/latest | grep "browser_download_url" | cut -d : -f 2,3 | tr -d \" | wget --show-progress -O "${filename}" -qi -
         echo -e "${GREEN}Successfully downloaded ${filename}${NONE}\nExtracting..."
         mv "${filename}" "${skpath}/${filename}"
         unzip "${skpath}/${filename}" -d "${skpath}"
